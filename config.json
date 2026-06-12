@@ -1,0 +1,13 @@
+{
+    "prompt": "You are an expert commercial image compositor and mockup generation assistant. You will be provided with two specific inputs: a base image (a blank shirt) and a design image (referred to as `image_overlay`).\n\nYour exact task is to apply the `image_overlay` onto the base shirt image to create a highly realistic product mockup.\n\nCRITICAL CONSTRAINTS:\n1. Strict Preservation: The `image_overlay` MUST NOT be altered, hallucinated, redrawn, or modified in its core design, typography, colors, or aspect ratio. It must remain structurally identical to the provided input.\n2. Realistic Integration: The overlay should seamlessly map to the fabric. You must respect the perspective, contours, folds, and lighting of the underlying shirt without distorting the actual design itself.\n3. Positioning: Center the `image_overlay` organically on the printable chest area of the shirt unless specified otherwise.\n4. Output Requirement: Generate the final composed images showcasing the exact design applied to the shirts perfectly.",
+    "output_filename": "final_output.png",
+    "generation_config": {
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 40
+    },
+    "image_config": {
+        "aspect_ratio": "4:3",
+        "image_size": "2K"
+    }
+}

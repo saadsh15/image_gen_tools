@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Dump — Your Thoughts Deserve a Home</title>
+    <meta name="description" content="Mood Dump is a personal diary app — a safe space to dump your raw thoughts, track your mood, and reflect on your story. No filters, no judgment.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bark: '#3A2118',
+                        copper: '#C67B4A',
+                        copperLight: '#D9976B',
+                        cream: '#FBF5EC',
+                        creamDark: '#F0E6D6',
+                        parchment: '#F5EDE0',
+                        inkBrown: '#5C3A2A',
+                        warmBlack: '#1A0F0A',
+                        warmGray: '#8C7A6E',
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'Georgia', 'serif'],
+                        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* ========== BASE & RESET ========== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        html.scroll-locked {
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: #3A2118;
+            background: #FBF5EC;
+            overflow-x: hidden;
+        }
+
+        ::selection {
+            background: #C67B4A;
+            color: #FBF5EC;
+        }
+
+        /* ========== LOADING SCREEN ========== */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: #1A0F0A;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #C67B4A;
+            margin-bottom: 2rem;
+            letter-spacing: 0.04em;
+            opacity: 0;
+            animation: fadeSlideUp 1s 0.2s forwards;
+        }
+
+        .loader-subtitle {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            color: #8C7A6E;
+            margin-bottom: 3rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: fadeSlideUp 1s 0.5s forwards;
+        }
+
+        .progress-container {
+            width: 320px;
+            opacity: 0;
+            animation: fadeSlideUp 1s 0.7s forwards;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 3px;
+            background: rgba(198, 123, 74, 0.15);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #C67B4A, #D9976B);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #8C7A6E;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.12em;
+        }
+
+        /* ========== ANIMATION HERO ========== */
+        #hero {
+            position: relative;
+            width: 100%;
+            height: 500vh;
+            background: #1A0F0A;
+        }
+
+        .sticky-container {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #animation-canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100vh;
+            object-fit: contain;
+        }
+
+        /* Hero overlay content — logo + tagline */
+        #hero-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        #hero-overlay .hero-logo {
+            max-width: 360px;
+            margin-bottom: 3rem;
+            filter: drop-shadow(0 4px 24px rgba(0,0,0,0.5));
+        }
+
+        #hero-overlay .hero-tagline {
+            position: absolute;
+            bottom: 4%;
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 400;
+            font-style: italic;
+            color: #000000;
+            letter-spacing: 0.02em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #typing-text-container {
+            position: absolute;
+            top: 36%;
+            left: 54%;
+            font-family: 'Kalam', cursive;
+            font-size: 2.2rem;
+            color: #1A0F0A;
+            opacity: 0;
+            line-height: 1.5;
+            transition: opacity 0.3s ease;
+            transform: rotate(-1deg);
+        }
+
+        #typing-text {
+            white-space: pre-wrap;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 2.2rem;
+            background-color: #1A0F0A;
+            margin-left: 4px;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Scroll indicator */
+        #scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 11;
+            opacity: 0;
+            transition: opacity 1s ease 0.5s;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        #scroll-indicator.visible {
+            opacity: 1;
+        }
+
+        #scroll-indicator .scroll-text {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            color: #C67B4A;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        }
+
+        #scroll-indicator .scroll-arrow {
+            display: inline-block;
+            color: #C67B4A;
+            font-size: 1.2rem;
+            animation: bounceArrow 2s infinite;
+        }
+
+        @keyframes bounceArrow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+
+        /* ========== SECTION ANIMATIONS ========== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* ========== SECTION: ABOUT ========== */
+        #about {
+            background: #FBF5EC;
+            position: relative;
+        }
+
+        #about::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 80px;
+            background: linear-gradient(to bottom, #C67B4A, transparent);
+        }
+
+        .section-label {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #C67B4A;
+            margin-bottom: 1rem;
+        }
+
+        .section-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 600;
+            color: #3A2118;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-body {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #5C3A2A;
+            max-width: 600px;
+        }
+
+        .decorative-line {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, #C67B4A, #D9976B);
+            border-radius: 2px;
+            margin-bottom: 2rem;
+        }
+
+        /* ========== SECTION: FEATURES ========== */
+        #features {
+            background: #F5EDE0;
+            position: relative;
+        }
+
+        .feature-card {
+            background: #FBF5EC;
+            border: 1px solid rgba(198, 123, 74, 0.12);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #C67B4A, #D9976B);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 48px rgba(58, 33, 24, 0.1);
+            border-color: rgba(198, 123, 74, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(198, 123, 74, 0.12), rgba(217, 151, 107, 0.08));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: #C67B4A;
+            font-size: 1.3rem;
+            transition: background 0.4s ease, transform 0.4s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: linear-gradient(135deg, #C67B4A, #D9976B);
+            color: #FBF5EC;
+            transform: scale(1.08);
+        }
+
+        .feature-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #3A2118;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-desc {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            color: #8C7A6E;
+            line-height: 1.7;
+        }
+
+        /* ========== SECTION: HOW IT WORKS ========== */
+        #how-it-works {
+            background: #FBF5EC;
+            position: relative;
+        }
+
+        .step-card {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #C67B4A, #D9976B);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FBF5EC;
+            box-shadow: 0 8px 24px rgba(198, 123, 74, 0.25);
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-connector {
+            position: absolute;
+            top: 32px;
+            left: calc(50% + 40px);
+            width: calc(100% - 80px);
+            height: 2px;
+            background: linear-gradient(90deg, #C67B4A, rgba(198, 123, 74, 0.2));
+            z-index: 1;
+        }
+
+        .step-icon {
+            font-size: 2rem;
+            color: #C67B4A;
+            margin-bottom: 1rem;
+        }
+
+        .step-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #3A2118;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: #8C7A6E;
+            line-height: 1.6;
+            max-width: 240px;
+            margin: 0 auto;
+        }
+
+        /* ========== SECTION: CTA ========== */
+        #cta {
+            background: linear-gradient(135deg, #1A0F0A 0%, #3A2118 50%, #2A1610 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 50%, rgba(198, 123, 74, 0.08) 0%, transparent 70%),
+                        radial-gradient(ellipse at 70% 50%, rgba(217, 151, 107, 0.05) 0%, transparent 70%);
+        }
+
+        .cta-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 600;
+            color: #FBF5EC;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .cta-sub {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.15rem;
+            color: #8C7A6E;
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, #C67B4A, #D9976B);
+            color: #FBF5EC;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 1rem 2.5rem;
+            border-radius: 100px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 32px rgba(198, 123, 74, 0.3);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 12px 40px rgba(198, 123, 74, 0.45);
+        }
+
+        .cta-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: transparent;
+            color: #C67B4A;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 0.9rem 2rem;
+            border-radius: 100px;
+            border: 1px solid rgba(198, 123, 74, 0.3);
+            cursor: pointer;
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .cta-btn-secondary:hover {
+            background: rgba(198, 123, 74, 0.1);
+            border-color: rgba(198, 123, 74, 0.5);
+        }
+
+        /* ========== FOOTER ========== */
+        footer {
+            background: #1A0F0A;
+            border-top: 1px solid rgba(198, 123, 74, 0.1);
+        }
+
+        footer a {
+            color: #8C7A6E;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 0.88rem;
+        }
+
+        footer a:hover {
+            color: #C67B4A;
+        }
+
+        .footer-logo {
+            max-width: 140px;
+            opacity: 0.7;
+            filter: brightness(1.2);
+        }
+
+        .footer-divider {
+            width: 100%;
+            height: 1px;
+            background: rgba(198, 123, 74, 0.08);
+        }
+
+        /* ========== UTILITY ANIMATIONS ========== */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Subtle paper texture overlay for cream sections */
+        .paper-texture {
+            position: relative;
+        }
+
+        .paper-texture::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+        }
+        /* ========== NAVBAR ========== */
+        #top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 90px;
+            background-color: rgba(31, 17, 12, 0.95); /* #1f110c with opacity */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 3rem;
+            z-index: 90;
+            border-bottom: 1px solid rgba(58, 33, 24, 0.1);
+        }
+
+        .nav-logo {
+            height: 140px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+            transform: scale(1.8);
+            transform-origin: left center;
+        }
+
+        .nav-signin {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #FBF5EC;
+            background-color: #3A2118;
+            padding: 0.6rem 1.5rem;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 12px rgba(58, 33, 24, 0.3);
+        }
+
+        .nav-signin:hover {
+            background-color: #1A0F0A;
+            transform: scale(1.05);
+        }
+
+        .primary-btn {
+            display: inline-block;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-style: italic;
+            color: #FBF5EC;
+            background-color: #C67B4A;
+            padding: 1.2rem 3.5rem;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 32px rgba(198, 123, 74, 0.4);
+            border: 1px solid transparent;
+        }
+
+        .primary-btn:hover {
+            background-color: #1A0F0A;
+            color: #C67B4A;
+            border-color: #C67B4A;
+            box-shadow: 0 12px 40px rgba(26, 15, 10, 0.6);
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== NAVBAR ==================== -->
+    <nav id="top-navbar">
+        <div class="nav-left">
+            <img src="assets/Mood-removebg-preview.png" alt="Mood Dump Logo" class="nav-logo">
+        </div>
+        <div class="nav-right">
+            <a href="#" class="nav-signin">Sign In</a>
+        </div>
+    </nav>
+
+    <!-- ==================== LOADING SCREEN ==================== -->
+    <div id="loading-screen">
+        <div class="loader-title">Mood Dump</div>
+        <div class="loader-subtitle">Preparing your experience</div>
+        <div class="progress-container">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0%</div>
+        </div>
+    </div>
+
+    <!-- ==================== SECTION 1: ANIMATION HERO ==================== -->
+    <section id="hero">
+        <div class="sticky-container">
+            <canvas id="animation-canvas" width="1280" height="720"></canvas>
+
+            <!-- Overlay: logo + tagline (hidden initially) -->
+            <div id="hero-overlay">
+                <img src="assets/Mood-removebg-preview.png" alt="Mood Dump Logo" class="hero-logo">
+                <div id="typing-text-container">
+                    <span id="typing-text"></span><span class="cursor"></span>
+                </div>
+                <p class="hero-tagline">Your thoughts deserve a home</p>
+            </div>
+
+            <!-- Scroll indicator (hidden initially) -->
+            <div id="scroll-indicator">
+                <div class="scroll-text">Scroll Down</div>
+                <div class="scroll-arrow"><i class="fa-solid fa-chevron-down"></i></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 2: ABOUT ==================== -->
+    <section id="about" class="paper-texture py-32 px-8">
+        <div class="max-w-3xl mx-auto text-center pt-12">
+            <div class="reveal mb-24">
+                <a href="#" class="primary-btn">Create your diary</a>
+            </div>
+
+            <div class="reveal">
+                <span class="section-label">About</span>
+            </div>
+            <div class="decorative-line mx-auto reveal reveal-delay-1"></div>
+            <h2 class="section-heading reveal reveal-delay-2">A safe space for<br>your raw thoughts</h2>
+            <p class="section-body mx-auto reveal reveal-delay-3">
+                Mood Dump isn't about perfection. It's about permission — permission to feel, to vent, to wonder, 
+                to rage, to hope. Pour out whatever's swirling in your head without worrying about grammar, judgment, 
+                or who might read it. This is <em>your</em> space. No filters, no audience, and zero trackers. Secured with end-to-end encryption, it's just you and the page.
+            </p>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 4: HOW IT WORKS ==================== -->
+    <section id="how-it-works" class="paper-texture py-32 px-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-20">
+                <div class="reveal">
+                    <span class="section-label">How It Works</span>
+                </div>
+                <div class="decorative-line mx-auto reveal reveal-delay-1"></div>
+                <h2 class="section-heading reveal reveal-delay-2">Three steps to clarity</h2>
+            </div>
+
+            <div class="grid grid-cols-3 gap-8 relative">
+                <!-- Step 1 -->
+                <div class="step-card reveal reveal-delay-1">
+                    <div class="step-number">1</div>
+                    <div class="step-connector"></div>
+                    <div class="step-icon"><i class="fa-solid fa-door-open"></i></div>
+                    <h3 class="step-title">Open the app</h3>
+                    <p class="step-desc">Launch Mood Dump whenever you feel the urge to write. No sign-up walls, just open and go.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card reveal reveal-delay-2">
+                    <div class="step-number">2</div>
+                    <div class="step-connector"></div>
+                    <div class="step-icon"><i class="fa-solid fa-pen-fancy"></i></div>
+                    <h3 class="step-title">Dump your thoughts</h3>
+                    <p class="step-desc">Let it all out. Type, scribble, rant — whatever your mind needs to release in this moment. We do not read your data.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card reveal reveal-delay-3">
+                    <div class="step-number">3</div>
+                    <div class="step-icon"><i class="fa-solid fa-eye"></i></div>
+                    <h3 class="step-title">Watch your story</h3>
+                    <p class="step-desc">Look back and see your patterns, growth, and journey unfold beautifully over time. Your data is encrypted.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 5: CTA ==================== -->
+    <section id="cta" class="py-32 px-8">
+        <div class="max-w-3xl mx-auto text-center relative z-10">
+            <div class="reveal">
+                <span class="section-label" style="color: #C67B4A;">Start Writing</span>
+            </div>
+            <h2 class="cta-heading reveal reveal-delay-1">Your story matters.<br>Start telling it.</h2>
+            <p class="cta-sub reveal reveal-delay-2">Join thousands who've found peace in putting pen to page — or rather, fingers to keyboard.</p>
+            <div class="flex items-center justify-center gap-4 reveal reveal-delay-3">
+                <a href="#" class="cta-btn">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Start Writing Free
+                </a>
+                <a href="#" class="cta-btn-secondary">
+                    <i class="fa-solid fa-play"></i>
+                    Watch Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SECTION 6: FOOTER ==================== -->
+    <footer class="py-12 px-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex items-center justify-between mb-8">
+                <img src="assets/Mood-removebg-preview.png" alt="Mood Dump" class="footer-logo">
+                <div class="flex items-center gap-8">
+                    <a href="#">About</a>
+                    <a href="#">Features</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Blog</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="flex items-center gap-5">
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter" style="font-size: 1.1rem;"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram" style="font-size: 1.1rem;"></i></a>
+                    <a href="#" aria-label="GitHub"><i class="fa-brands fa-github" style="font-size: 1.1rem;"></i></a>
+                </div>
+            </div>
+            <div class="footer-divider mb-6"></div>
+            <div class="flex items-center justify-between">
+                <p style="font-size: 0.8rem; color: #5C3A2A; opacity: 0.5;">
+                    &copy; 2026 Mood Dump. All rights reserved.
+                </p>
+                <div class="flex items-center gap-6">
+                    <a href="#" style="font-size: 0.8rem;">Terms of Service</a>
+                    <a href="#" style="font-size: 0.8rem;">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+    (function () {
+        'use strict';
+
+        // ── Constants ──
+        const TOTAL_FRAMES = 240;
+        const BATCH_SIZE   = 30;
+        const FPS          = 24;
+        const FRAME_INTERVAL = 1000 / FPS;
+
+        // ── DOM refs ──
+        const loadingScreen  = document.getElementById('loading-screen');
+        const progressFill   = document.getElementById('progress-fill');
+        const progressText   = document.getElementById('progress-text');
+        const canvas         = document.getElementById('animation-canvas');
+        const ctx            = canvas.getContext('2d');
+        const heroOverlay    = document.getElementById('hero-overlay');
+        const scrollIndicator = document.getElementById('scroll-indicator');
+        const replayBtn      = document.getElementById('replay-btn');
+
+        // ── State ──
+        const frames = new Array(TOTAL_FRAMES);
+        let loadedCount = 0;
+        let currentFrameIndex = 0;
+        let isTypingStarted = false;
+
+        // Lock scroll on load
+        document.documentElement.classList.add('scroll-locked');
+
+        // ── Frame path helper ──
+        function framePath(index) {
+            const num = String(index).padStart(3, '0');
+            return `assets/ezgif-frame-${num}.png`;
+        }
+
+        // ── Load a single image as a promise ──
+        function loadImage(index) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    frames[index - 1] = img;
+                    loadedCount++;
+                    const pct = Math.round((loadedCount / TOTAL_FRAMES) * 100);
+                    progressFill.style.width = pct + '%';
+                    progressText.textContent = pct + '%';
+                    resolve();
+                };
+                img.onerror = () => {
+                    // Still count it so progress doesn't stall
+                    loadedCount++;
+                    const pct = Math.round((loadedCount / TOTAL_FRAMES) * 100);
+                    progressFill.style.width = pct + '%';
+                    progressText.textContent = pct + '%';
+                    resolve();
+                };
+                img.src = framePath(index);
+            });
+        }
+
+        // ── Batch loader ──
+        async function loadAllFrames() {
+            for (let start = 1; start <= TOTAL_FRAMES; start += BATCH_SIZE) {
+                const end = Math.min(start + BATCH_SIZE - 1, TOTAL_FRAMES);
+                const batch = [];
+                for (let i = start; i <= end; i++) {
+                    batch.push(loadImage(i));
+                }
+                await Promise.all(batch);
+            }
+        }
+
+        // ── Draw a frame on the canvas ──
+        function drawFrame(img) {
+            if (!img) return;
+
+            // Scale canvas to fill viewport while maintaining aspect ratio
+            const containerW = window.innerWidth;
+            const containerH = window.innerHeight;
+            const imgRatio = img.width / img.height;
+            const containerRatio = containerW / containerH;
+
+            let drawW, drawH, offsetX, offsetY;
+
+            if (containerRatio > imgRatio) {
+                // Container is wider — fit to width
+                drawW = containerW;
+                drawH = containerW / imgRatio;
+                offsetX = 0;
+                offsetY = (containerH - drawH) / 2;
+            } else {
+                // Container is taller — fit to height
+                drawH = containerH;
+                drawW = containerH * imgRatio;
+                offsetX = (containerW - drawW) / 2;
+                offsetY = 0;
+            }
+
+            canvas.width = containerW;
+            canvas.height = containerH;
+            ctx.clearRect(0, 0, containerW, containerH);
+            ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+        }
+
+        // ── Scroll Event Handler ──
+        let scrollTicking = false;
+        function onScroll() {
+            if (!scrollTicking) {
+                window.requestAnimationFrame(() => {
+                    updateAnimationFromScroll();
+                    scrollTicking = false;
+                });
+                scrollTicking = true;
+            }
+        }
+
+        function updateAnimationFromScroll() {
+            const heroSection = document.getElementById('hero');
+            const rect = heroSection.getBoundingClientRect();
+            // Scroll progress within the hero section
+            // When rect.top == 0, progress is 0
+            // When rect.bottom == window.innerHeight, progress is 1
+            const maxScroll = heroSection.offsetHeight - window.innerHeight;
+            let progress = -rect.top / maxScroll;
+            
+            // Clamp between 0 and 1
+            progress = Math.max(0, Math.min(1, progress));
+
+            // Calculate current frame index (0 to TOTAL_FRAMES - 1)
+            const targetFrameIndex = Math.floor(progress * (TOTAL_FRAMES - 1));
+            
+            if (targetFrameIndex !== currentFrameIndex && frames[targetFrameIndex]) {
+                drawFrame(frames[targetFrameIndex]);
+                currentFrameIndex = targetFrameIndex;
+            }
+
+            // Fade out logo as we scroll down (diary cover opens)
+            const logo = document.querySelector('.hero-logo');
+            if (progress < 0.1) {
+                logo.style.opacity = Math.max(0, 1 - (progress / 0.1));
+            } else {
+                logo.style.opacity = 0;
+            }
+
+            // Typewriter effect for "You Matter."
+            const typeContainer = document.getElementById('typing-text');
+            const typeWrapper = document.getElementById('typing-text-container');
+            const textToType = "Dump your feelings\nNot Your Data";
+            
+            if (progress > 0.75 && !isTypingStarted) {
+                isTypingStarted = true;
+                typeWrapper.style.opacity = 1;
+                typeContainer.innerHTML = "";
+                let i = 0;
+                
+                function typeNext() {
+                    if (!isTypingStarted) return;
+                    if (i < textToType.length) {
+                        const char = textToType.charAt(i);
+                        if (char === '\n') {
+                            typeContainer.innerHTML += '<br>';
+                        } else {
+                            typeContainer.innerHTML += char;
+                        }
+                        i++;
+                        setTimeout(typeNext, 120);
+                    }
+                }
+                typeNext();
+            } else if (progress <= 0.75 && isTypingStarted) {
+                isTypingStarted = false;
+                typeWrapper.style.opacity = 0;
+                typeContainer.innerHTML = "";
+            }
+
+            // Fade in tagline when the diary opens (progress > 0.3)
+            const tagline = document.querySelector('.hero-tagline');
+            if (progress > 0.3) {
+                tagline.style.opacity = Math.min(1, (progress - 0.3) / 0.1);
+            } else {
+                tagline.style.opacity = 0;
+            }
+
+            // Fade out scroll indicator as we scroll down
+            if (progress > 0.05) {
+                scrollIndicator.style.opacity = 0;
+            } else {
+                scrollIndicator.style.opacity = 1;
+            }
+        }
+
+        // ── Scroll indicator click ──
+        scrollIndicator.addEventListener('click', () => {
+            const heroSection = document.getElementById('hero');
+            window.scrollTo({
+                top: heroSection.offsetTop + heroSection.offsetHeight,
+                behavior: 'smooth'
+            });
+        });
+
+        // ── Initialize ──
+        async function init() {
+            await loadAllFrames();
+
+            // Unlock scroll after loading
+            document.documentElement.classList.remove('scroll-locked');
+
+            // Draw first frame
+            if (frames[0]) {
+                drawFrame(frames[0]);
+            }
+
+            // Hide loading screen
+            loadingScreen.classList.add('hidden');
+
+            // Setup scroll-linked animation
+            window.addEventListener('scroll', onScroll, { passive: true });
+            
+            // Show scroll indicator
+            setTimeout(() => {
+                scrollIndicator.classList.add('visible');
+            }, 600);
+            
+            // Initial update in case we load scrolled down
+            updateAnimationFromScroll();
+        }
+
+        init();
+
+        // ── Handle resize ──
+        window.addEventListener('resize', () => {
+            if (frames[currentFrameIndex]) {
+                drawFrame(frames[currentFrameIndex]);
+            }
+            updateAnimationFromScroll();
+        });
+
+        // ── IntersectionObserver for reveal animations ──
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -60px 0px'
+        });
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+
+    })();
+    </script>
+
+</body>
+</html>
