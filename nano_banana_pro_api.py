@@ -51,9 +51,9 @@ def generate_image_with_context(config_path="config.json"):
     output_filename = config.get("output_filename", "final_output.png")
 
     # Hardcoded paths to the required realtime images and the overlay
-    image_path_1 = "/home/saad/Projects/arzonama_bullshit/orignal/Generated Image June 10, 2026 - 3_04AM.jpg"
-    image_path_2 = "/home/saad/Projects/arzonama_bullshit/orignal/Generated Image June 10, 2026 - 3_04AM(1).jpg"
-    image_overlay = "/home/saad/Projects/arzonama_bullshit/overlay/Artwork upscalled water 1.png"
+    image_path_1 = "path to image"
+    image_path_2 = "path to image"
+    image_overlay = "path to image"
 
     if not os.path.exists(image_path_1):
         print(f"Error: Required image 1 '{image_path_1}' not found.")
